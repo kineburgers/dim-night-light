@@ -34,6 +34,7 @@ const installText = document.getElementById("installText");
 const closeModal = document.getElementById("closeModal");
 const controls = document.querySelector(".controls");
 const tapHint = document.getElementById("tapHint");
+const tapCatcher = document.getElementById("tapCatcher");
 const soundOptions = document.getElementById("soundOptions");
 const soundButtons = document.querySelectorAll(".sound-option");
 
@@ -368,8 +369,8 @@ const toggleControls = (event) => {
   if (!nextHidden) scheduleAutoHide();
 };
 
-lamp.addEventListener("click", toggleControls);
-lamp.addEventListener("touchstart", toggleControls, { passive: true });
+tapCatcher.addEventListener("click", toggleControls);
+tapCatcher.addEventListener("touchstart", toggleControls, { passive: true });
 
 document.addEventListener("visibilitychange", () => {
   if (wakeLock && document.visibilityState === "visible") {

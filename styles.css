@@ -56,6 +56,17 @@ body {
   transition: opacity 0.3s ease, background 0.4s ease;
 }
 
+.tap-catcher {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+}
+
+.controls-hidden .tap-catcher {
+  pointer-events: auto;
+}
+
 .brand {
   position: absolute;
   top: 28px;
