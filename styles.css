@@ -79,6 +79,73 @@ body {
   transition: opacity 0.3s ease;
 }
 
+.galaxy {
+  position: absolute;
+  inset: -15%;
+  background: radial-gradient(
+      circle at 20% 30%,
+      rgba(255, 255, 255, 0.35),
+      rgba(90, 130, 255, 0.1) 25%,
+      transparent 55%
+    ),
+    radial-gradient(
+      circle at 70% 65%,
+      rgba(255, 255, 255, 0.25),
+      rgba(190, 120, 255, 0.12) 30%,
+      transparent 60%
+    ),
+    radial-gradient(
+      circle at 45% 50%,
+      rgba(255, 255, 255, 0.2),
+      rgba(120, 180, 255, 0.08) 35%,
+      transparent 70%
+    );
+  opacity: 0;
+  mix-blend-mode: screen;
+  filter: blur(6px);
+  transform: translate3d(0, 0, 0) scale(1.1);
+  animation: galaxy-drift 40s linear infinite;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.galaxy::before,
+.galaxy::after {
+  content: "";
+  position: absolute;
+  inset: -20%;
+  background-image: radial-gradient(
+      rgba(255, 255, 255, 0.7) 0.7px,
+      transparent 0.8px
+    ),
+    radial-gradient(
+      rgba(255, 255, 255, 0.45) 0.6px,
+      transparent 0.7px
+    ),
+    radial-gradient(
+      rgba(255, 255, 255, 0.25) 0.5px,
+      transparent 0.6px
+    );
+  background-size: 120px 120px, 180px 180px, 260px 260px;
+  background-position: 0 0, 40px 80px, 90px 120px;
+  opacity: 0.6;
+  animation: star-sway 60s linear infinite;
+}
+
+.galaxy::after {
+  opacity: 0.35;
+  filter: blur(1.5px);
+  animation-duration: 90s;
+}
+
+.galaxy-on .galaxy {
+  opacity: 0.9;
+}
+
+.galaxy-on::after {
+  opacity: 0.7;
+}
+
 .logo {
   font-size: 24px;
   font-weight: 600;
@@ -258,6 +325,30 @@ input[type="range"] {
     rgba(10, 10, 16, 0.4) 55%,
     #09090f 100%
   );
+}
+
+@keyframes galaxy-drift {
+  0% {
+    transform: translate3d(-2%, -1%, 0) scale(1.08);
+  }
+  50% {
+    transform: translate3d(2%, 1%, 0) scale(1.12);
+  }
+  100% {
+    transform: translate3d(-2%, -1%, 0) scale(1.08);
+  }
+}
+
+@keyframes star-sway {
+  0% {
+    transform: translate3d(0, 0, 0) rotate(0deg);
+  }
+  50% {
+    transform: translate3d(-2%, 1%, 0) rotate(0.4deg);
+  }
+  100% {
+    transform: translate3d(0, 0, 0) rotate(0deg);
+  }
 }
 
 .sr-only {

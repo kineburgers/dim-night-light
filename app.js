@@ -24,6 +24,7 @@ const palette = document.querySelector(".palette");
 const brightness = document.getElementById("brightness");
 const nightVisionButton = document.getElementById("nightVision");
 const boostButton = document.getElementById("boost");
+const galaxyButton = document.getElementById("galaxy");
 const musicButton = document.getElementById("music");
 const wakeLockButton = document.getElementById("wakeLock");
 const installButton = document.getElementById("installApp");
@@ -46,6 +47,7 @@ let lampOnly = false;
 let boostMode = false;
 let autoHideTimer = null;
 let musicOn = false;
+let galaxyOn = false;
 let audioCtx = null;
 let masterGain = null;
 let currentNodes = [];
@@ -93,6 +95,18 @@ const setQuickMode = (enabled) => {
   quickLightButton.classList.toggle("active", enabled);
   localStorage.setItem("dim-quick", enabled ? "1" : "0");
   setControlsHidden(enabled);
+};
+
+const setGalaxyMode = (enabled) => {
+  galaxyOn = enabled;
+  galaxyButton.classList.toggle("active", galaxyOn);
+  lamp.classList.toggle("galaxy-on", galaxyOn);
+  localStorage.setItem("dim-galaxy", galaxyOn ? "1" : "0");
+  if (galaxyOn && nightVision) {
+    nightVision = false;
+    nightVisionButton.classList.remove("active");
+    lamp.classList.remove("night-vision");
+  }
 };
 
 const initAudio = async () => {
@@ -198,6 +212,43 @@ const startSound = (preset) => {
     noise.start();
     lfo.start();
     currentNodes = [noise, filter, gain, lfo];
+  } else if (preset === "cosmos") {
+    const base = audioCtx.createOscillator();
+    const shimmer = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    const lfo = audioCtx.createOscillator();
+    const lfoGain = audioCtx.createGain();
+    const noise = createNoise();
+    const noiseFilter = audioCtx.createBiquadFilter();
+    const noiseGain = audioCtx.createGain();
+
+    base.type = "sine";
+    base.frequency.value = 46;
+    shimmer.type = "triangle";
+    shimmer.frequency.value = 92;
+    gain.gain.value = 0.2;
+    lfo.frequency.value = 0.04;
+    lfoGain.gain.value = 0.18;
+
+    noiseFilter.type = "highpass";
+    noiseFilter.frequency.value = 1200;
+    noiseGain.gain.value = 0.05;
+
+    lfo.connect(lfoGain);
+    lfoGain.connect(gain.gain);
+    base.connect(gain);
+    shimmer.connect(gain);
+    gain.connect(masterGain);
+
+    noise.connect(noiseFilter);
+    noiseFilter.connect(noiseGain);
+    noiseGain.connect(masterGain);
+
+    base.start();
+    shimmer.start();
+    lfo.start();
+    noise.start();
+    currentNodes = [base, shimmer, lfo, gain, noise, noiseFilter, noiseGain];
   }
 
   soundButtons.forEach((button) => {
@@ -287,6 +338,15 @@ boostButton.addEventListener("click", () => {
     brightness.value = "100";
     updateBrightness(100);
     setStatus("Boost on. Maximum glow for dark rooms.");
+  } else {
+    setStatus("");
+  }
+});
+
+galaxyButton.addEventListener("click", () => {
+  setGalaxyMode(!galaxyOn);
+  if (galaxyOn) {
+    setStatus("Galaxy mode on. Slow-moving milky way.");
   } else {
     setStatus("");
   }
@@ -390,6 +450,7 @@ const storedBrightness = localStorage.getItem("dim-brightness");
 const storedQuick = localStorage.getItem("dim-quick");
 const storedQuickSet = storedQuick !== null;
 const storedBoost = localStorage.getItem("dim-boost");
+const storedGalaxy = localStorage.getItem("dim-galaxy");
 const storedMusic = localStorage.getItem("dim-music");
 const storedSound = localStorage.getItem("dim-sound");
 const params = new URLSearchParams(window.location.search);
@@ -424,6 +485,10 @@ if (storedBoost === "1") {
   lamp.classList.add("boost");
   brightness.value = "100";
   updateBrightness(100);
+}
+
+if (storedGalaxy === "1") {
+  setGalaxyMode(true);
 }
 
 if (storedSound) {
