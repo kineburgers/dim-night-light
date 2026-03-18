@@ -10,13 +10,13 @@
       href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700&family=Spectral:ital,wght@0,400;0,600;1,400&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="styles.css?v=20260318" />
+    <link rel="stylesheet" href="styles.css?v=20260318c" />
   </head>
   <body>
     <main id="lamp" class="lamp" aria-label="Colored night light">
       <div class="glow"></div>
       <div id="tapCatcher" class="tap-catcher" aria-hidden="true"></div>
-      <div id="galaxyLayer" class="galaxy" aria-hidden="true"></div>
+      <canvas id="starfield" class="starfield" aria-hidden="true"></canvas>
       <header class="brand" aria-label="Dim night light">
         <div class="logo">Dim</div>
       </header>
@@ -43,43 +43,21 @@
           </div>
 
           <div class="toggles">
-            <button id="nightVision" class="toggle" type="button">
-              Night Vision
-            </button>
-            <button id="boost" class="toggle" type="button">
-              Boost
-            </button>
-            <button id="galaxy" class="toggle" type="button">
-              Galaxy
-            </button>
-            <button id="music" class="toggle" type="button">
-              Sound
-            </button>
-            <button id="wakeLock" class="toggle" type="button">
-              Keep Screen On
-            </button>
-            <button id="installApp" class="toggle" type="button">
-              Add to Home Screen
-            </button>
-            <button id="quickLight" class="toggle" type="button">
-              Quick Light
-            </button>
+            <button id="nightVision" class="toggle" type="button">Night Vision</button>
+            <button id="boost" class="toggle" type="button">Boost</button>
+            <button id="galaxy" class="toggle" type="button">Galaxy</button>
+            <button id="music" class="toggle" type="button">Sound</button>
+            <button id="wakeLock" class="toggle" type="button">Keep On</button>
+            <button id="quickLight" class="toggle" type="button">Quick</button>
+            <button id="installApp" class="toggle ghost" type="button">Add</button>
           </div>
         </div>
 
         <div id="soundOptions" class="sound-options" aria-label="Sound presets">
-          <button class="sound-option" data-sound="drift" type="button">
-            Drift
-          </button>
-          <button class="sound-option" data-sound="rain" type="button">
-            Rain
-          </button>
-          <button class="sound-option" data-sound="breeze" type="button">
-            Breeze
-          </button>
-          <button class="sound-option" data-sound="cosmos" type="button">
-            Cosmos
-          </button>
+          <button class="sound-option" data-sound="hearth" type="button">Hearth</button>
+          <button class="sound-option" data-sound="arcane" type="button">Arcane</button>
+          <button class="sound-option" data-sound="nocturne" type="button">Nocturne</button>
+          <button class="sound-option" data-sound="piano" type="button">Piano</button>
         </div>
 
         <div class="hints" id="status" aria-live="polite"></div>
@@ -96,6 +74,6 @@
       </div>
     </div>
 
-    <script src="app.js?v=20260318"></script>
+    <script src="app.js?v=20260318c"></script>
   </body>
 </html>

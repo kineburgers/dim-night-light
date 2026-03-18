@@ -36,6 +36,7 @@ const closeModal = document.getElementById("closeModal");
 const controls = document.querySelector(".controls");
 const tapHint = document.getElementById("tapHint");
 const tapCatcher = document.getElementById("tapCatcher");
+const starfield = document.getElementById("starfield");
 const soundOptions = document.getElementById("soundOptions");
 const soundButtons = document.querySelectorAll(".sound-option");
 
@@ -48,10 +49,14 @@ let boostMode = false;
 let autoHideTimer = null;
 let musicOn = false;
 let galaxyOn = false;
+let noteTimer = null;
+let stars = [];
+let starAnimId = null;
+let starCtx = null;
 let audioCtx = null;
 let masterGain = null;
 let currentNodes = [];
-let currentSound = "drift";
+let currentSound = "hearth";
 
 const setLampColor = (hex) => {
   lamp.style.setProperty("--lamp-color", hex);
@@ -102,6 +107,11 @@ const setGalaxyMode = (enabled) => {
   galaxyButton.classList.toggle("active", galaxyOn);
   lamp.classList.toggle("galaxy-on", galaxyOn);
   localStorage.setItem("dim-galaxy", galaxyOn ? "1" : "0");
+  if (galaxyOn) {
+    startStarfield();
+  } else {
+    stopStarfield();
+  }
   if (galaxyOn && nightVision) {
     nightVision = false;
     nightVisionButton.classList.remove("active");
@@ -122,6 +132,10 @@ const initAudio = async () => {
 };
 
 const stopCurrentSound = () => {
+  if (noteTimer) {
+    window.clearInterval(noteTimer);
+    noteTimer = null;
+  }
   currentNodes.forEach((node) => {
     try {
       node.stop?.(0);
@@ -156,65 +170,9 @@ const startSound = (preset) => {
   currentSound = preset;
   localStorage.setItem("dim-sound", preset);
 
-  if (preset === "drift") {
-    const osc1 = audioCtx.createOscillator();
-    const osc2 = audioCtx.createOscillator();
-    const gain = audioCtx.createGain();
-    const lfo = audioCtx.createOscillator();
-    const lfoGain = audioCtx.createGain();
-
-    osc1.type = "sine";
-    osc1.frequency.value = 55;
-    osc2.type = "sine";
-    osc2.frequency.value = 110;
-    gain.gain.value = 0.25;
-    lfo.frequency.value = 0.08;
-    lfoGain.gain.value = 0.12;
-
-    lfo.connect(lfoGain);
-    lfoGain.connect(gain.gain);
-    osc1.connect(gain);
-    osc2.connect(gain);
-    gain.connect(masterGain);
-
-    osc1.start();
-    osc2.start();
-    lfo.start();
-    currentNodes = [osc1, osc2, lfo, gain];
-  } else if (preset === "rain") {
-    const noise = createNoise();
-    const filter = audioCtx.createBiquadFilter();
-    const gain = audioCtx.createGain();
-    filter.type = "lowpass";
-    filter.frequency.value = 1400;
-    gain.gain.value = 0.18;
-    noise.connect(filter);
-    filter.connect(gain);
-    gain.connect(masterGain);
-    noise.start();
-    currentNodes = [noise, filter, gain];
-  } else if (preset === "breeze") {
-    const noise = createNoise();
-    const filter = audioCtx.createBiquadFilter();
-    const gain = audioCtx.createGain();
-    const lfo = audioCtx.createOscillator();
-    const lfoGain = audioCtx.createGain();
-    filter.type = "bandpass";
-    filter.frequency.value = 420;
-    gain.gain.value = 0.12;
-    lfo.frequency.value = 0.05;
-    lfoGain.gain.value = 160;
-    lfo.connect(lfoGain);
-    lfoGain.connect(filter.frequency);
-    noise.connect(filter);
-    filter.connect(gain);
-    gain.connect(masterGain);
-    noise.start();
-    lfo.start();
-    currentNodes = [noise, filter, gain, lfo];
-  } else if (preset === "cosmos") {
+  if (preset === "hearth") {
     const base = audioCtx.createOscillator();
-    const shimmer = audioCtx.createOscillator();
+    const warm = audioCtx.createOscillator();
     const gain = audioCtx.createGain();
     const lfo = audioCtx.createOscillator();
     const lfoGain = audioCtx.createGain();
@@ -223,21 +181,20 @@ const startSound = (preset) => {
     const noiseGain = audioCtx.createGain();
 
     base.type = "sine";
-    base.frequency.value = 46;
-    shimmer.type = "triangle";
-    shimmer.frequency.value = 92;
-    gain.gain.value = 0.2;
-    lfo.frequency.value = 0.04;
-    lfoGain.gain.value = 0.18;
-
-    noiseFilter.type = "highpass";
-    noiseFilter.frequency.value = 1200;
-    noiseGain.gain.value = 0.05;
+    base.frequency.value = 48;
+    warm.type = "sine";
+    warm.frequency.value = 96;
+    gain.gain.value = 0.22;
+    lfo.frequency.value = 0.05;
+    lfoGain.gain.value = 0.12;
+    noiseFilter.type = "lowpass";
+    noiseFilter.frequency.value = 900;
+    noiseGain.gain.value = 0.03;
 
     lfo.connect(lfoGain);
     lfoGain.connect(gain.gain);
     base.connect(gain);
-    shimmer.connect(gain);
+    warm.connect(gain);
     gain.connect(masterGain);
 
     noise.connect(noiseFilter);
@@ -245,15 +202,141 @@ const startSound = (preset) => {
     noiseGain.connect(masterGain);
 
     base.start();
-    shimmer.start();
+    warm.start();
     lfo.start();
     noise.start();
-    currentNodes = [base, shimmer, lfo, gain, noise, noiseFilter, noiseGain];
+    currentNodes = [base, warm, lfo, gain, noise, noiseFilter, noiseGain];
+  } else if (preset === "arcane") {
+    const noise = createNoise();
+    const filter = audioCtx.createBiquadFilter();
+    const gain = audioCtx.createGain();
+    const shimmer = audioCtx.createOscillator();
+    const shimmerGain = audioCtx.createGain();
+    filter.type = "highpass";
+    filter.frequency.value = 1200;
+    gain.gain.value = 0.12;
+    shimmer.type = "triangle";
+    shimmer.frequency.value = 392;
+    shimmerGain.gain.value = 0.04;
+    noise.connect(filter);
+    filter.connect(gain);
+    gain.connect(masterGain);
+    shimmer.connect(shimmerGain);
+    shimmerGain.connect(masterGain);
+    noise.start();
+    shimmer.start();
+    currentNodes = [noise, filter, gain, shimmer, shimmerGain];
+  } else if (preset === "nocturne") {
+    const base = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    base.type = "sine";
+    base.frequency.value = 52;
+    gain.gain.value = 0.18;
+    base.connect(gain);
+    gain.connect(masterGain);
+    base.start();
+    currentNodes = [base, gain];
+  } else if (preset === "piano") {
+    const playNote = () => {
+      const now = audioCtx.currentTime;
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      const notes = [261.63, 293.66, 329.63, 392.0, 440.0];
+      const freq = notes[Math.floor(Math.random() * notes.length)];
+      osc.type = "sine";
+      osc.frequency.value = freq;
+      gain.gain.setValueAtTime(0, now);
+      gain.gain.linearRampToValueAtTime(0.12, now + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + 1.6);
+      osc.connect(gain);
+      gain.connect(masterGain);
+      osc.start(now);
+      osc.stop(now + 1.8);
+    };
+    playNote();
+    noteTimer = window.setInterval(playNote, 2600);
   }
 
   soundButtons.forEach((button) => {
     button.classList.toggle("active", button.dataset.sound === preset);
   });
+};
+
+const resizeStarfield = () => {
+  if (!starfield) return;
+  const dpr = window.devicePixelRatio || 1;
+  starfield.width = Math.floor(window.innerWidth * dpr);
+  starfield.height = Math.floor(window.innerHeight * dpr);
+  starfield.style.width = `${window.innerWidth}px`;
+  starfield.style.height = `${window.innerHeight}px`;
+  starCtx = starfield.getContext("2d");
+  if (starCtx) {
+    starCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  }
+  stars = [];
+  const count = Math.floor((window.innerWidth * window.innerHeight) / 6000);
+  for (let i = 0; i < count; i += 1) {
+    stars.push({
+      x: Math.random() * window.innerWidth,
+      y: Math.random() * window.innerHeight,
+      z: Math.random() * 1.5 + 0.5,
+      r: Math.random() * 1.2 + 0.4,
+      tw: Math.random() * Math.PI * 2,
+    });
+  }
+};
+
+const drawStarfield = () => {
+  if (!starCtx) return;
+  starCtx.clearRect(0, 0, window.innerWidth, window.innerHeight);
+  starCtx.fillStyle = "#05050a";
+  starCtx.fillRect(0, 0, window.innerWidth, window.innerHeight);
+
+  const bandY = window.innerHeight * 0.45;
+  const bandSpread = window.innerHeight * 0.2;
+
+  stars.forEach((s) => {
+    s.x += 0.03 * s.z;
+    if (s.x > window.innerWidth + 10) s.x = -10;
+    s.tw += 0.02;
+    const band = Math.exp(-Math.pow((s.y - bandY) / bandSpread, 2));
+    const alpha = 0.25 + band * 0.6 + (Math.sin(s.tw) + 1) * 0.1;
+    starCtx.fillStyle = `rgba(255,255,255,${alpha})`;
+    starCtx.beginPath();
+    starCtx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+    starCtx.fill();
+  });
+
+  // Milky way haze
+  const grad = starCtx.createRadialGradient(
+    window.innerWidth * 0.55,
+    window.innerHeight * 0.5,
+    10,
+    window.innerWidth * 0.55,
+    window.innerHeight * 0.5,
+    window.innerWidth * 0.6
+  );
+  grad.addColorStop(0, "rgba(120,160,255,0.12)");
+  grad.addColorStop(0.4, "rgba(80,120,220,0.08)");
+  grad.addColorStop(1, "rgba(0,0,0,0)");
+  starCtx.fillStyle = grad;
+  starCtx.fillRect(0, 0, window.innerWidth, window.innerHeight);
+};
+
+const startStarfield = () => {
+  resizeStarfield();
+  const animate = () => {
+    drawStarfield();
+    starAnimId = window.requestAnimationFrame(animate);
+  };
+  if (!starAnimId) animate();
+};
+
+const stopStarfield = () => {
+  if (starAnimId) {
+    window.cancelAnimationFrame(starAnimId);
+    starAnimId = null;
+  }
 };
 
 colors.forEach((color, index) => {
@@ -443,6 +526,11 @@ document.addEventListener("visibilitychange", () => {
       audioCtx.resume().catch(() => {});
     }
   }
+  if (document.visibilityState === "hidden") {
+    stopStarfield();
+  } else if (galaxyOn) {
+    startStarfield();
+  }
 });
 
 const storedColor = localStorage.getItem("dim-color");
@@ -500,6 +588,10 @@ if (storedMusic === "1") {
   musicButton.classList.add("active");
   soundOptions.classList.add("active");
 }
+
+window.addEventListener("resize", () => {
+  if (galaxyOn) resizeStarfield();
+});
 
 quickLightButton.addEventListener("click", () => {
   setQuickMode(!quickMode);
