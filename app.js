@@ -270,6 +270,21 @@ const startSound = (preset) => {
     };
     play();
     noteTimer = window.setInterval(play, 2200);
+  } else if (preset === "haven") {
+    // Bright, uplifting magical motif (original).
+    const melody = [
+      261.63, 329.63, 392.0, 523.25,
+      493.88, 392.0, 440.0, 349.23,
+      392.0, 523.25, 587.33, 659.25,
+      587.33, 523.25, 392.0, 440.0,
+    ];
+    let step = 0;
+    const play = () => {
+      playSoftNote(melody[step], 2.6);
+      step = (step + 1) % melody.length;
+    };
+    play();
+    noteTimer = window.setInterval(play, 2000);
   }
 
   soundButtons.forEach((button) => {
