@@ -37,6 +37,7 @@ let wakeLock = null;
 let nightVision = false;
 let deferredPrompt = null;
 let quickMode = false;
+let lampOnly = false;
 
 const setLampColor = (hex) => {
   lamp.style.setProperty("--lamp-color", hex);
@@ -184,6 +185,7 @@ installButton.addEventListener("click", async () => {
 });
 
 lamp.addEventListener("click", (event) => {
+  if (lampOnly) return;
   if (!quickMode) return;
   if (controls.contains(event.target)) return;
   setControlsHidden(!lamp.classList.contains("controls-hidden"));
@@ -199,6 +201,9 @@ const storedColor = localStorage.getItem("dim-color");
 const storedBrightness = localStorage.getItem("dim-brightness");
 const storedQuick = localStorage.getItem("dim-quick");
 const storedQuickSet = storedQuick !== null;
+const params = new URLSearchParams(window.location.search);
+const mode = (params.get("mode") || "").toLowerCase();
+lampOnly = params.has("light") || mode === "light" || mode === "lamp";
 
 setLampColor(storedColor || colors[0].hex);
 brightness.value = storedBrightness || brightness.value;
@@ -211,7 +216,12 @@ if (isStandalone || isInIosStandalone) {
   installButton.style.display = "inline-flex";
 }
 
-if (storedQuick === "1") {
+if (lampOnly) {
+  lamp.classList.add("lamp-only");
+  setQuickMode(true);
+  setControlsHidden(true);
+  setStatus("");
+} else if (storedQuick === "1") {
   setQuickMode(true);
 } else if (!storedQuickSet && (isStandalone || isInIosStandalone)) {
   setQuickMode(true);
