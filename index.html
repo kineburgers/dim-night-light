@@ -15,22 +15,21 @@
   <body>
     <main id="lamp" class="lamp" aria-label="Colored night light">
       <div class="glow"></div>
-      <header class="brand">
+      <header class="brand" aria-label="Dim night light">
         <div class="logo">Dim</div>
-        <div class="tagline">Soft light. Quiet night.</div>
       </header>
 
       <section class="controls" aria-label="Light controls">
         <div class="control-row">
           <div>
-            <div class="label">Color</div>
+            <div class="label sr-only">Color</div>
             <div class="palette" role="list"></div>
           </div>
         </div>
 
         <div class="control-row">
           <div class="slider-group">
-            <div class="label">Brightness</div>
+            <div class="label sr-only">Brightness</div>
             <input
               id="brightness"
               type="range"
@@ -45,6 +44,9 @@
             <button id="nightVision" class="toggle" type="button">
               Night Vision
             </button>
+            <button id="boost" class="toggle" type="button">
+              Boost
+            </button>
             <button id="wakeLock" class="toggle" type="button">
               Keep Screen On
             </button>
@@ -54,16 +56,6 @@
             <button id="quickLight" class="toggle" type="button">
               Quick Light
             </button>
-          </div>
-        </div>
-
-        <div class="use-cases">
-          <div class="label">Use Cases</div>
-          <div class="case-list">
-            <span class="case">Kids night light</span>
-            <span class="case">Bathroom glow</span>
-            <span class="case">Late reading</span>
-            <span class="case">Mood lighting</span>
           </div>
         </div>
 

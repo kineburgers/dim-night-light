@@ -23,6 +23,7 @@ const lamp = document.getElementById("lamp");
 const palette = document.querySelector(".palette");
 const brightness = document.getElementById("brightness");
 const nightVisionButton = document.getElementById("nightVision");
+const boostButton = document.getElementById("boost");
 const wakeLockButton = document.getElementById("wakeLock");
 const installButton = document.getElementById("installApp");
 const quickLightButton = document.getElementById("quickLight");
@@ -38,6 +39,7 @@ let nightVision = false;
 let deferredPrompt = null;
 let quickMode = false;
 let lampOnly = false;
+let boostMode = false;
 
 const setLampColor = (hex) => {
   lamp.style.setProperty("--lamp-color", hex);
@@ -97,6 +99,12 @@ colors.forEach((color, index) => {
 
 brightness.addEventListener("input", (event) => {
   updateBrightness(Number(event.target.value));
+  if (boostMode && Number(event.target.value) < 100) {
+    boostMode = false;
+    boostButton.classList.remove("active");
+    lamp.classList.remove("boost");
+    localStorage.setItem("dim-boost", "0");
+  }
 });
 
 nightVisionButton.addEventListener("click", () => {
@@ -141,6 +149,20 @@ wakeLockButton.addEventListener("click", async () => {
   }
 
   requestWakeLock();
+});
+
+boostButton.addEventListener("click", () => {
+  boostMode = !boostMode;
+  boostButton.classList.toggle("active", boostMode);
+  lamp.classList.toggle("boost", boostMode);
+  localStorage.setItem("dim-boost", boostMode ? "1" : "0");
+  if (boostMode) {
+    brightness.value = "100";
+    updateBrightness(100);
+    setStatus("Boost on. Maximum glow for dark rooms.");
+  } else {
+    setStatus("");
+  }
 });
 
 const isStandalone = window.matchMedia("(display-mode: standalone)").matches;
@@ -201,6 +223,7 @@ const storedColor = localStorage.getItem("dim-color");
 const storedBrightness = localStorage.getItem("dim-brightness");
 const storedQuick = localStorage.getItem("dim-quick");
 const storedQuickSet = storedQuick !== null;
+const storedBoost = localStorage.getItem("dim-boost");
 const params = new URLSearchParams(window.location.search);
 const mode = (params.get("mode") || "").toLowerCase();
 lampOnly = params.has("light") || mode === "light" || mode === "lamp";
@@ -225,6 +248,14 @@ if (lampOnly) {
   setQuickMode(true);
 } else if (!storedQuickSet && (isStandalone || isInIosStandalone)) {
   setQuickMode(true);
+}
+
+if (storedBoost === "1") {
+  boostMode = true;
+  boostButton.classList.add("active");
+  lamp.classList.add("boost");
+  brightness.value = "100";
+  updateBrightness(100);
 }
 
 quickLightButton.addEventListener("click", () => {
