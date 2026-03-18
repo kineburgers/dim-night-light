@@ -123,7 +123,7 @@ const initAudio = async () => {
   if (!audioCtx) {
     audioCtx = new (window.AudioContext || window.webkitAudioContext)();
     masterGain = audioCtx.createGain();
-    masterGain.gain.value = 0.18;
+    masterGain.gain.value = 0.45;
     masterGain.connect(audioCtx.destination);
   }
   if (audioCtx.state !== "running") {
@@ -184,12 +184,12 @@ const startSound = (preset) => {
     base.frequency.value = 48;
     warm.type = "sine";
     warm.frequency.value = 96;
-    gain.gain.value = 0.22;
+    gain.gain.value = 0.3;
     lfo.frequency.value = 0.05;
     lfoGain.gain.value = 0.12;
     noiseFilter.type = "lowpass";
     noiseFilter.frequency.value = 900;
-    noiseGain.gain.value = 0.03;
+    noiseGain.gain.value = 0.05;
 
     lfo.connect(lfoGain);
     lfoGain.connect(gain.gain);
@@ -214,10 +214,10 @@ const startSound = (preset) => {
     const shimmerGain = audioCtx.createGain();
     filter.type = "highpass";
     filter.frequency.value = 1200;
-    gain.gain.value = 0.12;
+    gain.gain.value = 0.18;
     shimmer.type = "triangle";
     shimmer.frequency.value = 392;
-    shimmerGain.gain.value = 0.04;
+    shimmerGain.gain.value = 0.06;
     noise.connect(filter);
     filter.connect(gain);
     gain.connect(masterGain);
@@ -231,7 +231,7 @@ const startSound = (preset) => {
     const gain = audioCtx.createGain();
     base.type = "sine";
     base.frequency.value = 52;
-    gain.gain.value = 0.18;
+    gain.gain.value = 0.25;
     base.connect(gain);
     gain.connect(masterGain);
     base.start();
@@ -246,7 +246,7 @@ const startSound = (preset) => {
       osc.type = "sine";
       osc.frequency.value = freq;
       gain.gain.setValueAtTime(0, now);
-      gain.gain.linearRampToValueAtTime(0.12, now + 0.02);
+      gain.gain.linearRampToValueAtTime(0.2, now + 0.02);
       gain.gain.exponentialRampToValueAtTime(0.0001, now + 1.6);
       osc.connect(gain);
       gain.connect(masterGain);
