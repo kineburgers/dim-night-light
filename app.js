@@ -40,6 +40,7 @@ let deferredPrompt = null;
 let quickMode = false;
 let lampOnly = false;
 let boostMode = false;
+let autoHideTimer = null;
 
 const setLampColor = (hex) => {
   lamp.style.setProperty("--lamp-color", hex);
@@ -69,6 +70,13 @@ const setControlsHidden = (hidden) => {
   } else {
     tapHint.setAttribute("aria-hidden", "true");
   }
+};
+
+const scheduleAutoHide = () => {
+  if (autoHideTimer) window.clearTimeout(autoHideTimer);
+  autoHideTimer = window.setTimeout(() => {
+    if (lampOnly || quickMode) setControlsHidden(true);
+  }, 6000);
 };
 
 const setQuickMode = (enabled) => {
@@ -207,10 +215,11 @@ installButton.addEventListener("click", async () => {
 });
 
 lamp.addEventListener("click", (event) => {
-  if (lampOnly) return;
-  if (!quickMode) return;
   if (controls.contains(event.target)) return;
-  setControlsHidden(!lamp.classList.contains("controls-hidden"));
+  if (!quickMode && !lampOnly) return;
+  const nextHidden = !lamp.classList.contains("controls-hidden");
+  setControlsHidden(nextHidden);
+  if (!nextHidden) scheduleAutoHide();
 });
 
 document.addEventListener("visibilitychange", () => {
