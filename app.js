@@ -256,13 +256,20 @@ const startSound = (preset) => {
       wave: "sine",
     });
   } else if (preset === "piano") {
-    const notes = [261.63, 293.66, 329.63, 392.0, 440.0, 523.25];
+    // Original, gentle "magical" melody (not a copy of any known theme).
+    const melody = [
+      261.63, 311.13, 349.23, 392.0,
+      349.23, 311.13, 261.63, 233.08,
+      261.63, 311.13, 349.23, 466.16,
+      415.3, 349.23, 311.13, 261.63,
+    ];
+    let step = 0;
     const play = () => {
-      const freq = notes[Math.floor(Math.random() * notes.length)];
-      playSoftNote(freq, 2.8);
+      playSoftNote(melody[step], 2.9);
+      step = (step + 1) % melody.length;
     };
     play();
-    noteTimer = window.setInterval(play, 2400);
+    noteTimer = window.setInterval(play, 2200);
   }
 
   soundButtons.forEach((button) => {
