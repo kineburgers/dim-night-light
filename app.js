@@ -170,91 +170,99 @@ const startSound = (preset) => {
   currentSound = preset;
   localStorage.setItem("dim-sound", preset);
 
-  if (preset === "hearth") {
-    const base = audioCtx.createOscillator();
-    const warm = audioCtx.createOscillator();
-    const gain = audioCtx.createGain();
+  const createPad = (freqs, options = {}) => {
+    const filter = audioCtx.createBiquadFilter();
+    const output = audioCtx.createGain();
     const lfo = audioCtx.createOscillator();
     const lfoGain = audioCtx.createGain();
-    const noise = createNoise();
-    const noiseFilter = audioCtx.createBiquadFilter();
-    const noiseGain = audioCtx.createGain();
+    const detune = options.detune ?? 3;
 
-    base.type = "sine";
-    base.frequency.value = 48;
-    warm.type = "sine";
-    warm.frequency.value = 96;
-    gain.gain.value = 0.3;
-    lfo.frequency.value = 0.05;
-    lfoGain.gain.value = 0.12;
-    noiseFilter.type = "lowpass";
-    noiseFilter.frequency.value = 900;
-    noiseGain.gain.value = 0.05;
+    filter.type = "lowpass";
+    filter.frequency.value = options.filter ?? 900;
+    output.gain.value = options.gain ?? 0.18;
 
+    lfo.frequency.value = options.lfoFreq ?? 0.035;
+    lfoGain.gain.value = options.lfoDepth ?? 120;
     lfo.connect(lfoGain);
-    lfoGain.connect(gain.gain);
-    base.connect(gain);
-    warm.connect(gain);
-    gain.connect(masterGain);
+    lfoGain.connect(filter.frequency);
 
-    noise.connect(noiseFilter);
-    noiseFilter.connect(noiseGain);
-    noiseGain.connect(masterGain);
+    const nodes = [filter, output, lfo, lfoGain];
+    freqs.forEach((freq) => {
+      const osc = audioCtx.createOscillator();
+      osc.type = options.wave ?? "sine";
+      osc.frequency.value = freq;
+      osc.detune.value = (Math.random() - 0.5) * detune * 2;
+      osc.connect(filter);
+      osc.start();
+      nodes.push(osc);
+    });
 
-    base.start();
-    warm.start();
+    filter.connect(output);
+    output.connect(masterGain);
     lfo.start();
-    noise.start();
-    currentNodes = [base, warm, lfo, gain, noise, noiseFilter, noiseGain];
-  } else if (preset === "arcane") {
-    const noise = createNoise();
+    return nodes;
+  };
+
+  const playSoftNote = (freq, duration = 2.6) => {
+    const now = audioCtx.currentTime;
+    const osc1 = audioCtx.createOscillator();
+    const osc2 = audioCtx.createOscillator();
     const filter = audioCtx.createBiquadFilter();
     const gain = audioCtx.createGain();
-    const shimmer = audioCtx.createOscillator();
-    const shimmerGain = audioCtx.createGain();
-    filter.type = "highpass";
-    filter.frequency.value = 1200;
-    gain.gain.value = 0.18;
-    shimmer.type = "triangle";
-    shimmer.frequency.value = 392;
-    shimmerGain.gain.value = 0.06;
-    noise.connect(filter);
+
+    osc1.type = "sine";
+    osc2.type = "triangle";
+    osc1.frequency.value = freq;
+    osc2.frequency.value = freq * 2;
+    osc2.detune.value = -6;
+
+    filter.type = "lowpass";
+    filter.frequency.value = 2200;
+
+    gain.gain.setValueAtTime(0, now);
+    gain.gain.linearRampToValueAtTime(0.16, now + 0.03);
+    gain.gain.exponentialRampToValueAtTime(0.0001, now + duration);
+
+    osc1.connect(filter);
+    osc2.connect(filter);
     filter.connect(gain);
     gain.connect(masterGain);
-    shimmer.connect(shimmerGain);
-    shimmerGain.connect(masterGain);
-    noise.start();
-    shimmer.start();
-    currentNodes = [noise, filter, gain, shimmer, shimmerGain];
+
+    osc1.start(now);
+    osc2.start(now);
+    osc1.stop(now + duration + 0.1);
+    osc2.stop(now + duration + 0.1);
+  };
+
+  if (preset === "hearth") {
+    currentNodes = createPad([130.81, 196.0, 246.94], {
+      gain: 0.2,
+      filter: 800,
+      lfoDepth: 90,
+      wave: "triangle",
+    });
+  } else if (preset === "arcane") {
+    currentNodes = createPad([174.61, 261.63, 329.63], {
+      gain: 0.16,
+      filter: 1200,
+      lfoDepth: 160,
+      wave: "sine",
+    });
   } else if (preset === "nocturne") {
-    const base = audioCtx.createOscillator();
-    const gain = audioCtx.createGain();
-    base.type = "sine";
-    base.frequency.value = 52;
-    gain.gain.value = 0.25;
-    base.connect(gain);
-    gain.connect(masterGain);
-    base.start();
-    currentNodes = [base, gain];
+    currentNodes = createPad([98.0, 147.0, 196.0], {
+      gain: 0.22,
+      filter: 700,
+      lfoDepth: 80,
+      wave: "sine",
+    });
   } else if (preset === "piano") {
-    const playNote = () => {
-      const now = audioCtx.currentTime;
-      const osc = audioCtx.createOscillator();
-      const gain = audioCtx.createGain();
-      const notes = [261.63, 293.66, 329.63, 392.0, 440.0];
+    const notes = [261.63, 293.66, 329.63, 392.0, 440.0, 523.25];
+    const play = () => {
       const freq = notes[Math.floor(Math.random() * notes.length)];
-      osc.type = "sine";
-      osc.frequency.value = freq;
-      gain.gain.setValueAtTime(0, now);
-      gain.gain.linearRampToValueAtTime(0.2, now + 0.02);
-      gain.gain.exponentialRampToValueAtTime(0.0001, now + 1.6);
-      osc.connect(gain);
-      gain.connect(masterGain);
-      osc.start(now);
-      osc.stop(now + 1.8);
+      playSoftNote(freq, 2.8);
     };
-    playNote();
-    noteTimer = window.setInterval(playNote, 2600);
+    play();
+    noteTimer = window.setInterval(play, 2400);
   }
 
   soundButtons.forEach((button) => {
