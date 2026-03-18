@@ -24,6 +24,7 @@ const palette = document.querySelector(".palette");
 const brightness = document.getElementById("brightness");
 const nightVisionButton = document.getElementById("nightVision");
 const boostButton = document.getElementById("boost");
+const musicButton = document.getElementById("music");
 const wakeLockButton = document.getElementById("wakeLock");
 const installButton = document.getElementById("installApp");
 const quickLightButton = document.getElementById("quickLight");
@@ -33,6 +34,8 @@ const installText = document.getElementById("installText");
 const closeModal = document.getElementById("closeModal");
 const controls = document.querySelector(".controls");
 const tapHint = document.getElementById("tapHint");
+const soundOptions = document.getElementById("soundOptions");
+const soundButtons = document.querySelectorAll(".sound-option");
 
 let wakeLock = null;
 let nightVision = false;
@@ -41,6 +44,11 @@ let quickMode = false;
 let lampOnly = false;
 let boostMode = false;
 let autoHideTimer = null;
+let musicOn = false;
+let audioCtx = null;
+let masterGain = null;
+let currentNodes = [];
+let currentSound = "drift";
 
 const setLampColor = (hex) => {
   lamp.style.setProperty("--lamp-color", hex);
@@ -84,6 +92,116 @@ const setQuickMode = (enabled) => {
   quickLightButton.classList.toggle("active", enabled);
   localStorage.setItem("dim-quick", enabled ? "1" : "0");
   setControlsHidden(enabled);
+};
+
+const initAudio = async () => {
+  if (!audioCtx) {
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    masterGain = audioCtx.createGain();
+    masterGain.gain.value = 0.18;
+    masterGain.connect(audioCtx.destination);
+  }
+  if (audioCtx.state !== "running") {
+    await audioCtx.resume();
+  }
+};
+
+const stopCurrentSound = () => {
+  currentNodes.forEach((node) => {
+    try {
+      node.stop?.(0);
+    } catch (err) {
+      // ignore
+    }
+    try {
+      node.disconnect?.();
+    } catch (err) {
+      // ignore
+    }
+  });
+  currentNodes = [];
+};
+
+const createNoise = () => {
+  const bufferSize = audioCtx.sampleRate * 2;
+  const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+  const data = buffer.getChannelData(0);
+  for (let i = 0; i < bufferSize; i += 1) {
+    data[i] = Math.random() * 2 - 1;
+  }
+  const source = audioCtx.createBufferSource();
+  source.buffer = buffer;
+  source.loop = true;
+  return source;
+};
+
+const startSound = (preset) => {
+  if (!audioCtx || !masterGain) return;
+  stopCurrentSound();
+  currentSound = preset;
+  localStorage.setItem("dim-sound", preset);
+
+  if (preset === "drift") {
+    const osc1 = audioCtx.createOscillator();
+    const osc2 = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    const lfo = audioCtx.createOscillator();
+    const lfoGain = audioCtx.createGain();
+
+    osc1.type = "sine";
+    osc1.frequency.value = 55;
+    osc2.type = "sine";
+    osc2.frequency.value = 110;
+    gain.gain.value = 0.25;
+    lfo.frequency.value = 0.08;
+    lfoGain.gain.value = 0.12;
+
+    lfo.connect(lfoGain);
+    lfoGain.connect(gain.gain);
+    osc1.connect(gain);
+    osc2.connect(gain);
+    gain.connect(masterGain);
+
+    osc1.start();
+    osc2.start();
+    lfo.start();
+    currentNodes = [osc1, osc2, lfo, gain];
+  } else if (preset === "rain") {
+    const noise = createNoise();
+    const filter = audioCtx.createBiquadFilter();
+    const gain = audioCtx.createGain();
+    filter.type = "lowpass";
+    filter.frequency.value = 1400;
+    gain.gain.value = 0.18;
+    noise.connect(filter);
+    filter.connect(gain);
+    gain.connect(masterGain);
+    noise.start();
+    currentNodes = [noise, filter, gain];
+  } else if (preset === "breeze") {
+    const noise = createNoise();
+    const filter = audioCtx.createBiquadFilter();
+    const gain = audioCtx.createGain();
+    const lfo = audioCtx.createOscillator();
+    const lfoGain = audioCtx.createGain();
+    filter.type = "bandpass";
+    filter.frequency.value = 420;
+    gain.gain.value = 0.12;
+    lfo.frequency.value = 0.05;
+    lfoGain.gain.value = 160;
+    lfo.connect(lfoGain);
+    lfoGain.connect(filter.frequency);
+    noise.connect(filter);
+    filter.connect(gain);
+    gain.connect(masterGain);
+    noise.start();
+    lfo.start();
+    currentNodes = [noise, filter, gain, lfo];
+  }
+
+  soundButtons.forEach((button) => {
+    button.classList.toggle("active", button.dataset.sound === preset);
+  });
 };
 
 colors.forEach((color, index) => {
@@ -173,6 +291,34 @@ boostButton.addEventListener("click", () => {
   }
 });
 
+musicButton.addEventListener("click", async () => {
+  musicOn = !musicOn;
+  musicButton.classList.toggle("active", musicOn);
+  soundOptions.classList.toggle("active", musicOn);
+  localStorage.setItem("dim-music", musicOn ? "1" : "0");
+  if (musicOn) {
+    await initAudio();
+    startSound(currentSound);
+    setStatus("Sound on. Tap a preset to switch.");
+  } else {
+    stopCurrentSound();
+    if (audioCtx) audioCtx.suspend().catch(() => {});
+    setStatus("");
+  }
+});
+
+soundButtons.forEach((button) => {
+  button.addEventListener("click", async () => {
+    await initAudio();
+    musicOn = true;
+    musicButton.classList.add("active");
+    soundOptions.classList.add("active");
+    localStorage.setItem("dim-music", "1");
+    startSound(button.dataset.sound);
+    setStatus("Sound on.");
+  });
+});
+
 const isStandalone = window.matchMedia("(display-mode: standalone)").matches;
 const isIos = /iphone|ipad|ipod/i.test(window.navigator.userAgent);
 const isInIosStandalone = window.navigator.standalone === true;
@@ -229,6 +375,13 @@ document.addEventListener("visibilitychange", () => {
   if (wakeLock && document.visibilityState === "visible") {
     requestWakeLock();
   }
+  if (audioCtx) {
+    if (document.visibilityState === "hidden") {
+      audioCtx.suspend().catch(() => {});
+    } else if (musicOn) {
+      audioCtx.resume().catch(() => {});
+    }
+  }
 });
 
 const storedColor = localStorage.getItem("dim-color");
@@ -236,6 +389,8 @@ const storedBrightness = localStorage.getItem("dim-brightness");
 const storedQuick = localStorage.getItem("dim-quick");
 const storedQuickSet = storedQuick !== null;
 const storedBoost = localStorage.getItem("dim-boost");
+const storedMusic = localStorage.getItem("dim-music");
+const storedSound = localStorage.getItem("dim-sound");
 const params = new URLSearchParams(window.location.search);
 const mode = (params.get("mode") || "").toLowerCase();
 lampOnly = params.has("light") || mode === "light" || mode === "lamp";
@@ -268,6 +423,16 @@ if (storedBoost === "1") {
   lamp.classList.add("boost");
   brightness.value = "100";
   updateBrightness(100);
+}
+
+if (storedSound) {
+  currentSound = storedSound;
+}
+
+if (storedMusic === "1") {
+  musicOn = true;
+  musicButton.classList.add("active");
+  soundOptions.classList.add("active");
 }
 
 quickLightButton.addEventListener("click", () => {
