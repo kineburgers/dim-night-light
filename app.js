@@ -214,13 +214,16 @@ installButton.addEventListener("click", async () => {
   showInstallHelp();
 });
 
-lamp.addEventListener("click", (event) => {
+const toggleControls = (event) => {
   if (controls.contains(event.target)) return;
   if (!quickMode && !lampOnly) return;
   const nextHidden = !lamp.classList.contains("controls-hidden");
   setControlsHidden(nextHidden);
   if (!nextHidden) scheduleAutoHide();
-});
+};
+
+lamp.addEventListener("click", toggleControls);
+lamp.addEventListener("touchstart", toggleControls, { passive: true });
 
 document.addEventListener("visibilitychange", () => {
   if (wakeLock && document.visibilityState === "visible") {
