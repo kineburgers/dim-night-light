@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Dim — Night Light</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700&family=Spectral:ital,wght@0,400;0,600;1,400&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <main id="lamp" class="lamp" aria-label="Colored night light">
+      <div class="glow"></div>
+      <header class="brand">
+        <div class="logo">Dim</div>
+        <div class="tagline">Soft light. Quiet night.</div>
+      </header>
+
+      <section class="controls" aria-label="Light controls">
+        <div class="control-row">
+          <div>
+            <div class="label">Color</div>
+            <div class="palette" role="list"></div>
+          </div>
+        </div>
+
+        <div class="control-row">
+          <div class="slider-group">
+            <div class="label">Brightness</div>
+            <input
+              id="brightness"
+              type="range"
+              min="10"
+              max="100"
+              value="70"
+              aria-label="Brightness"
+            />
+          </div>
+
+          <div class="toggles">
+            <button id="nightVision" class="toggle" type="button">
+              Night Vision
+            </button>
+            <button id="wakeLock" class="toggle" type="button">
+              Keep Screen On
+            </button>
+            <button id="installApp" class="toggle" type="button">
+              Add to Home Screen
+            </button>
+            <button id="quickLight" class="toggle" type="button">
+              Quick Light
+            </button>
+          </div>
+        </div>
+
+        <div class="use-cases">
+          <div class="label">Use Cases</div>
+          <div class="case-list">
+            <span class="case">Kids night light</span>
+            <span class="case">Bathroom glow</span>
+            <span class="case">Late reading</span>
+            <span class="case">Mood lighting</span>
+          </div>
+        </div>
+
+        <div class="hints" id="status" aria-live="polite"></div>
+      </section>
+    </main>
+
+    <div class="tap-hint" id="tapHint">Tap to show controls</div>
+
+    <div id="installModal" class="modal" aria-hidden="true">
+      <div class="modal-card" role="dialog" aria-modal="true">
+        <div class="modal-title">Add Dim to Your Home Screen</div>
+        <div class="modal-body" id="installText"></div>
+        <button id="closeModal" class="toggle" type="button">Got it</button>
+      </div>
+    </div>
+
+    <script src="app.js"></script>
+  </body>
+</html>
