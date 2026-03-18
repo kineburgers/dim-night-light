@@ -198,6 +198,7 @@ document.addEventListener("visibilitychange", () => {
 const storedColor = localStorage.getItem("dim-color");
 const storedBrightness = localStorage.getItem("dim-brightness");
 const storedQuick = localStorage.getItem("dim-quick");
+const storedQuickSet = storedQuick !== null;
 
 setLampColor(storedColor || colors[0].hex);
 brightness.value = storedBrightness || brightness.value;
@@ -211,6 +212,8 @@ if (isStandalone || isInIosStandalone) {
 }
 
 if (storedQuick === "1") {
+  setQuickMode(true);
+} else if (!storedQuickSet && (isStandalone || isInIosStandalone)) {
   setQuickMode(true);
 }
 
